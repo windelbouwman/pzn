@@ -1,6 +1,9 @@
 
 extern crate sdl2; 
 
+use std::borrow::BorrowMut;
+use std::cell::RefCell;
+
 use sdl2::video::Window;
 use wasmer_runtime::Ctx;
 use sdl2::pixels::Color;
@@ -33,6 +36,14 @@ static WASM: &'static [u8] = &[
     0x6f, 0x6e, 0x65, 0x02, 0x07, 0x01, 0x00, 0x01, 0x00, 0x02, 0x70, 0x30,
 ];
 */
+
+
+thread_local!(
+static PZN_RUNTIME: RefCell<PznRuntime> = RefCell::new(PznRuntime::new())
+);
+
+// static PZN_RUNTIME: RefCell<Option<PznRuntime>> = RefCell::default();
+// }
 
 extern fn f64_print(n: f64, _: &mut Ctx) {
     println!("{}", n);
@@ -71,6 +82,7 @@ impl PznRuntime {
     pub extern fn draw_rectangle(&self, x: f64, y: f64, width: f64, height: f64, _: &mut Ctx) {
         println!("rect: {}, {}, {}, {}", x, y, width, height);
 
+    
     /*
                 canvas.set_draw_color(Color::RGB(255, 0, 0));
             // let color = Color::RGB(255, 0, 0);
@@ -82,20 +94,23 @@ impl PznRuntime {
 }
 
 pub extern fn draw_rectangle(x: f64, y: f64, width: f64, height: f64, _: &mut Ctx) {
-        println!("rect: {}, {}, {}, {}", x, y, width, height);
-
-    /*
-                canvas.set_draw_color(Color::RGB(255, 0, 0));
-            // let color = Color::RGB(255, 0, 0);
-            let rect = Rect::new(20, 20, 400, 200);
-            canvas.fill_rect(rect).unwrap();
-    */
+    println!("rect: {}, {}, {}, {}", x, y, width, height);
+    PZN_RUNTIME.with(|runtime_cell| {
+        let mut runtime = runtime_cell.borrow_mut();
+        
+        runtime.canvas.set_draw_color(Color::RGB(255, 0, 0));
+        // let color = Color::RGB(255, 0, 0);
+        let rect = Rect::new(x as i32, y as i32, width as u32, height as u32);
+        runtime.canvas.fill_rect(rect).unwrap();
+    });
 }
 
 pub fn main() -> error::Result<()> {
     println!("Hello, world!");
 
-    let mut runtime = PznRuntime::new();
+    // let runtime = PznRuntime::new();
+
+    // PZN_RUNTIME.borrow_mut().replace(runtime);
 
     // runtime.load('myshader')
 
@@ -125,19 +140,24 @@ pub fn main() -> error::Result<()> {
     let mut instance = instantiate(&WASM, import_object)?;
 
     'running: loop {
-        i = (i + 1) % 255;
-        runtime.canvas.set_draw_color(Color::RGB(i, 64, 255 - i));
-        runtime.canvas.clear();
 
-        for event in runtime.event_pump.poll_iter() {
-            match event {
-                Event::Quit {..} |
-                Event::KeyDown { keycode: Some(Keycode::Escape), .. } => {
-                    break 'running
-                },
-                _ => {}
+        PZN_RUNTIME.with(|runtime_cell| {
+            let mut runtime = runtime_cell.borrow_mut();
+            i = (i + 1) % 255;
+            runtime.canvas.set_draw_color(Color::RGB(i, 64, 255 - i));
+            runtime.canvas.clear();
+
+            for event in runtime.event_pump.poll_iter() {
+                match event {
+                    Event::Quit {..} |
+                    Event::KeyDown { keycode: Some(Keycode::Escape), .. } => {
+                        // break 'running
+                        unimplemented!("TODO");
+                    },
+                    _ => {}
+                }
             }
-        }
+        });
         // The rest of the game loop goes here...
 
 /*
@@ -152,8 +172,10 @@ pub fn main() -> error::Result<()> {
 
         // assert_eq!(values[0], Value::I32(43));
 
-
-        runtime.canvas.present();
+        PZN_RUNTIME.with(|runtime_cell| {
+            let mut runtime = runtime_cell.borrow_mut();
+            runtime.canvas.present();
+        });
         ::std::thread::sleep(Duration::new(0, 1_000_000_000u32 / 60));
     }
 
