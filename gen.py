@@ -16,5 +16,5 @@ imports = ['(import "env" "draw_rectangle" (func $draw_rectangle (param f64 f64 
 mod = python_to_wasm(draw, imports=imports)
 print(mod)
 
-with open('shader.wasm', 'wb') as f:
+with open('pzn/shader.wasm', 'wb') as f:
     mod.to_file(f)
