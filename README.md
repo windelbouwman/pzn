@@ -48,6 +48,7 @@ Some example use-cases:
 * A Julia process running a lightweight local GUI.
 * Standalone interactive scientific visualization that can be shown in
   the browser or as a ~1 MiB desktop app.
+* I'm pretty sure we can do an awesome chat app in <20 MiB.
 
 An important aspect is the use of WASM to communicate “behavior” to the
 graphics endpoint. This is similar to how JavaScript is used to script
