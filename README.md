@@ -89,3 +89,13 @@ the idea in some forms:
 * Implement a runtime in the browser using JavaScript modules instead of WASM,
   because we can already create these with PScript. This allows demonstrating
   advanced usage from Python quickly while the point above is in progress.
+
+## Re-considerations
+
+Een async interface also brings problems, e.g. exceptions in the "shaders" are hard
+to trace. Maybe better aim for a sync API (though without return values so it can
+be used async relatively easily?). Implement in JS en Rust, Python can use it
+through e.g. PyO3. Then Python needs Numba or something else to speed up low-level
+drawing. Then the main point is to *define* a standard API, and implement it in Rust
+and JS.
+
